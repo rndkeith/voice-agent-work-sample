@@ -1,0 +1,333 @@
+# Voice AI Assistant - Kubernetes Deployment Configuration
+# Demonstrates production-ready Kubernetes deployment for healthcare AI systems
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: voice-agent
+  labels:
+    app.kubernetes.io/name: voice-agent
+    app.kubernetes.io/component: healthcare-ai
+    compliance.healthcare/hipaa: "true"
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: voice-agent-config
+  namespace: voice-agent
+data:
+  appsettings.json: |
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Warning"
+        }
+      },
+      "VoiceAgent": {
+        "TurnTimeoutSeconds": 30,
+        "MaxConversationTurns": 20,
+        "DefaultLanguage": "en-US",
+        "EnablePHIRedaction": true
+      },
+      "OpenTelemetry": {
+        "ServiceName": "voice-agent",
+        "TracingEnabled": true,
+        "MetricsEnabled": true
+      }
+    }
+---
+# Secret for sensitive configuration (referenced, not included)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: voice-agent-secrets
+  namespace: voice-agent
+type: Opaque
+# Note: Secret data would be managed through secure secret management
+# Examples: Twilio auth tokens, LLM API keys, database connections
+---
+# Deployment configuration with production-ready settings
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voice-agent
+  namespace: voice-agent
+  labels:
+    app.kubernetes.io/name: voice-agent
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: api
+spec:
+  replicas: 3  # Multi-instance for availability
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: voice-agent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: voice-agent
+        app.kubernetes.io/version: "1.0.0"
+      annotations:
+        # Prometheus scraping configuration
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+        # Force pod restart on config changes
+        checksum/config: "placeholder-for-config-hash"
+    spec:
+      serviceAccountName: voice-agent
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: voice-agent
+        image: voice-agent:1.0.0  # Replace with actual registry
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        # Secret environment variables (examples)
+        - name: TWILIO_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: voice-agent-secrets
+              key: twilio-auth-token
+        - name: AZURE_OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: voice-agent-secrets
+              key: azure-openai-api-key
+        # Resource management for cost optimization and reliability
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        # Health checks for Kubernetes management
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Startup probe for slow initialization
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        # Volume mounts for configuration and temporary storage
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: temp-volume
+          mountPath: /tmp
+        - name: logs-volume
+          mountPath: /app/logs
+      # Volume definitions
+      volumes:
+      - name: config-volume
+        configMap:
+          name: voice-agent-config
+      - name: temp-volume
+        emptyDir: {}
+      - name: logs-volume
+        emptyDir: {}
+      # Node selection and affinity for optimal placement
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - voice-agent
+              topologyKey: kubernetes.io/hostname
+      # Tolerations for dedicated nodes (if applicable)
+      tolerations:
+      - key: "healthcare-workload"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+---
+# Service for internal communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: voice-agent-service
+  namespace: voice-agent
+  labels:
+    app.kubernetes.io/name: voice-agent
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: voice-agent
+---
+# Horizontal Pod Autoscaler for dynamic scaling
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: voice-agent-hpa
+  namespace: voice-agent
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: voice-agent
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+# Pod Disruption Budget for availability during maintenance
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: voice-agent-pdb
+  namespace: voice-agent
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: voice-agent
+---
+# Service Account with minimal permissions
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: voice-agent
+  namespace: voice-agent
+  labels:
+    app.kubernetes.io/name: voice-agent
+---
+# Network Policy for security isolation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: voice-agent-network-policy
+  namespace: voice-agent
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: voice-agent
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to: []  # Allow all egress (customize based on requirements)
+    ports:
+    - protocol: TCP
+      port: 443  # HTTPS for external APIs
+    - protocol: TCP
+      port: 53   # DNS
+    - protocol: UDP
+      port: 53   # DNS
+---
+# Ingress for external access (example with nginx-ingress)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: voice-agent-ingress
+  namespace: voice-agent
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - voice-agent.company.com
+    secretName: voice-agent-tls
+  rules:
+  - host: voice-agent.company.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: voice-agent-service
+            port:
+              number: 80

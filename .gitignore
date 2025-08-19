@@ -1,0 +1,334 @@
+# Voice AI Assistant - Git Ignore Configuration
+# Comprehensive exclusion patterns for healthcare AI development
+
+# ═══════════════════════════════════════════════════════════════════
+# .NET / C# Build Artifacts
+# ═══════════════════════════════════════════════════════════════════
+
+# Build outputs
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio temporary files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# TeamCity
+_TeamCity*
+
+# DotCover
+*.dotCover
+
+# AxoCover
+.axoCover/*
+!.axoCover/settings.json
+
+# Coverlet
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# ═══════════════════════════════════════════════════════════════════
+# Security & Sensitive Information (CRITICAL FOR HEALTHCARE)
+# ═══════════════════════════════════════════════════════════════════
+
+# Environment files with secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# API keys and credentials
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.json
+!**/appsettings.json
+!**/appsettings.Example.json
+
+# Certificate files
+*.pfx
+*.p12
+*.crt
+*.pem
+*.key
+*.cer
+
+# Database files with potential PHI
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Backup files that might contain sensitive data
+*.bak
+*.backup
+*.old
+
+# ═══════════════════════════════════════════════════════════════════
+# Healthcare & Compliance Data
+# ═══════════════════════════════════════════════════════════════════
+
+# Test data that might contain PHI
+**/test-data/
+**/sample-data/
+**/phi-data/
+**/patient-data/
+
+# Evaluation datasets and transcripts
+**/transcripts/
+**/conversation-logs/
+**/evaluation-data/
+**/training-data/
+
+# Audit logs and compliance reports
+**/audit-logs/
+**/compliance-reports/
+**/phi-scan-results/
+
+# ═══════════════════════════════════════════════════════════════════
+# Development & Testing
+# ═══════════════════════════════════════════════════════════════════
+
+# Test results
+[Tt]est[Rr]esult*/
+[Cc]overage[Rr]eport*/
+*.trx
+*.coverage
+*.coveragexml
+TestResults/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# MSBuild Binary and Structured Log
+*.binlog
+
+# NVidia Nsight GPU Debugger
+*.nvuser
+
+# ═══════════════════════════════════════════════════════════════════
+# Docker & Containerization
+# ═══════════════════════════════════════════════════════════════════
+
+# Docker override files
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.prod.yml
+.dockerignore
+
+# Docker volumes and data
+docker-data/
+docker-volumes/
+
+# ═══════════════════════════════════════════════════════════════════
+# Cloud & Infrastructure
+# ═══════════════════════════════════════════════════════════════════
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+
+# Kubernetes secrets
+**/secrets/
+**/*-secret.yaml
+**/*-secrets.yaml
+
+# Cloud provider configurations
+.aws/
+.azure/
+.gcloud/
+
+# ═══════════════════════════════════════════════════════════════════
+# Monitoring & Observability
+# ═══════════════════════════════════════════════════════════════════
+
+# Log files
+*.log
+logs/
+log/
+
+# Telemetry and metrics data
+telemetry-data/
+metrics-data/
+trace-data/
+
+# Grafana and monitoring configs with credentials
+grafana-data/
+prometheus-data/
+
+# ═══════════════════════════════════════════════════════════════════
+# Development Tools
+# ═══════════════════════════════════════════════════════════════════
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# ═══════════════════════════════════════════════════════════════════
+# Temporary Files
+# ═══════════════════════════════════════════════════════════════════
+
+# Temporary folders
+tmp/
+temp/
+.tmp/
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ═══════════════════════════════════════════════════════════════════
+# AI/ML Specific
+# ═══════════════════════════════════════════════════════════════════
+
+# Model files and weights
+*.model
+*.weights
+*.pkl
+*.joblib
+
+# Training data and embeddings
+embeddings/
+model-cache/
+training-outputs/
+
+# LLM provider caches
+llm-cache/
+provider-cache/
+
+# ═══════════════════════════════════════════════════════════════════
+# Documentation Build Artifacts
+# ═══════════════════════════════════════════════════════════════════
+
+# Generated documentation
+docs/_build/
+docs/.doctrees/
+site/
+_site/
+
+# Sphinx documentation
+docs/_build/
+
+# ═══════════════════════════════════════════════════════════════════
+# Project Specific Exclusions
+# ═══════════════════════════════════════════════════════════════════
+
+# Local configuration overrides
+config.local.json
+settings.local.json
+
+# Development scripts with credentials
+dev-scripts/
+local-scripts/
+
+# Performance testing outputs
+performance-results/
+load-test-results/
+
+# Evaluation and benchmarking outputs
+evaluation/results/
+benchmarks/outputs/
+
+# Local development databases
+dev.db
+local.db
+test.db
+
+# ═══════════════════════════════════════════════════════════════════
+# Important Notes for Healthcare Development
+# ═══════════════════════════════════════════════════════════════════
+
+# NEVER commit:
+# - Patient Health Information (PHI)
+# - API keys or credentials
+# - Database files with real data
+# - Encryption keys or certificates
+# - Production configuration files
+# - Real conversation transcripts
+# - Personally Identifiable Information (PII)
+
+# ALWAYS ensure:
+# - Test data is synthetic and de-identified
+# - Credentials are stored in secure vaults
+# - Configuration uses environment variables
+# - Sensitive files are encrypted at rest
+# - Access is logged and audited
